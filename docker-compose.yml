@@ -11,12 +11,5 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Bonus: Thêm Redis nếu bạn muốn làm tính năng cache [cite: 49]
-  redis:
-    image: redis:alpine
-    container_name: tracking_cache
-    ports:
-      - "6379:6379"
-
 volumes:
   postgres_data:

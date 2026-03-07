@@ -28,13 +28,27 @@ func main() {
 	if err != nil {
 		panic("Kết nối Database thất bại! Vui lòng kiểm tra Docker hoặc PostgreSQL.")
 	}
-
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS device_locations (
+		id SERIAL PRIMARY KEY,
+		device_id VARCHAR(50) NOT NULL,
+		latitude DOUBLE PRECISION NOT NULL,
+		longitude DOUBLE PRECISION NOT NULL,
+		timestamp TIMESTAMP WITH TIME ZONE NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS idx_device_time ON device_locations (device_id, timestamp DESC);
+	`
+	_, err = dbPool.Exec(context.Background(), createTableSQL)
+	if err != nil {
+		panic("Lỗi khi tự động tạo bảng dữ liệu: " + err.Error())
+	}
+	fmt.Println("Đã kiểm tra và khởi tạo Database thành công!")
 	r := gin.Default()
-	r.Use(cors.Default()) 
+	r.Use(cors.Default())
 
 	api := r.Group("/api/v1")
 	{
-		
+
 		api.GET("/devices", getDeviceList)                 // Lấy danh sách xe
 		api.POST("/locations", postLocation)               //  Nhận dữ liệu vị trí GPS
 		api.GET("/devices/:device_id/latest", getLatest)   //  Lấy vị trí mới nhất
@@ -44,7 +58,8 @@ func main() {
 
 	r.Run(":8080")
 }
-// Lấy danh sách thiết bị 
+
+// Lấy danh sách thiết bị
 func getDeviceList(c *gin.Context) {
 	query := `SELECT DISTINCT device_id FROM device_locations ORDER BY device_id`
 	rows, err := dbPool.Query(context.Background(), query)
@@ -112,7 +127,7 @@ func getHistory(c *gin.Context) {
 
 	query := `SELECT device_id, latitude, longitude, timestamp FROM device_locations 
               WHERE device_id = $1 AND timestamp BETWEEN $2 AND $3 ORDER BY timestamp ASC`
-	
+
 	rows, err := dbPool.Query(context.Background(), query, deviceID, from, to)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi truy xuất lịch sử"})
