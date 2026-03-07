@@ -33,6 +33,7 @@ Yêu cầu môi trường: Cài đặt sẵn **Docker**, **Go (Golang)**, và **
 **Tải các thư viện**
 
 *  go mod tidy
+  
 **Khởi chạy server API**
  
 * go run main.go
@@ -52,6 +53,7 @@ Yêu cầu môi trường: Cài đặt sẵn **Docker**, **Go (Golang)**, và **
 **tại terminal dự án chạy lệnh:**
 
 * docker exec -it tracking_db psql -U user_tracking -d tracking_map
+  
 **sau đó nhập:**
   
 INSERT INTO device_locations (device_id, latitude, longitude, timestamp) VALUES 
