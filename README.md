@@ -27,18 +27,24 @@ Yêu cầu môi trường: Cài đặt sẵn **Docker**, **Go (Golang)**, và **
 * docker-compose up -d ( lần đầu khởi động )
 * docker start tracking_db ( các lần sau chạy leengj này )
 ### Bước 2: Khởi động Backend (Golang)
-* Di chuyển vào thư mục backend (nơi chứa main.go)
-* Tải các thư viện
-go mod tidy
+**Di chuyển vào thư mục backend (nơi chứa main.go)**
+  
+**Tải các thư viện**
+
+*  go mod tidy
 ### Khởi chạy server API 
 go run main.go
 
 ### Bước 3: Khởi động Frontend (React.js)
-* Di chuyển vào thư mục frontend
-Cài đặt các thư viện 
-* npm install
+**Di chuyển vào thư mục frontend**
+
+**Cài đặt các thư viện** 
+
+npm install
+  
 * **Khởi chạy giao diện Web**
-* npm start
+  
+npm start
 
 * **1 số lưu ý:**
 * **để xem lịch di chuyển cần 1 số dữ liệu, nên phải fake dữ liệu:**
