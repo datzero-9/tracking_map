@@ -23,7 +23,8 @@ Hệ thống sử dụng **OSRM** thông qua Public API của dự án.
 Yêu cầu môi trường: Cài đặt sẵn **Docker**, **Go (Golang)**, và **Node.js**.
 
 ### Bước 1: Khởi động Database (PostgreSQL)
-* Mở Terminal / PowerShell tại thư mục gốc của project:
+**Mở Terminal / PowerShell tại thư mục gốc của project:**
+
 * docker-compose up -d ( lần đầu khởi động )
 * docker start tracking_db ( các lần sau chạy leengj này )
 ### Bước 2: Khởi động Backend (Golang)
@@ -32,28 +33,31 @@ Yêu cầu môi trường: Cài đặt sẵn **Docker**, **Go (Golang)**, và **
 **Tải các thư viện**
 
 *  go mod tidy
-### Khởi chạy server API 
-go run main.go
+**Khởi chạy server API**
+ 
+* go run main.go
 
 ### Bước 3: Khởi động Frontend (React.js)
 **Di chuyển vào thư mục frontend**
-
 **Cài đặt các thư viện** 
 
-npm install
+* npm install
   
-* **Khởi chạy giao diện Web**
+**Khởi chạy giao diện Web**
   
-npm start
+* npm start
 
-* **1 số lưu ý:**
-* **để xem lịch di chuyển cần 1 số dữ liệu, nên phải fake dữ liệu:**
-* **tại terminal dự án chạy lệnh:**
+**1 số lưu ý:**
+**để xem lịch di chuyển cần 1 số dữ liệu, nên phải fake dữ liệu:**
+**tại terminal dự án chạy lệnh:**
+
 * docker exec -it tracking_db psql -U user_tracking -d tracking_map
-* **sau đó nhập:**
-* INSERT INTO device_locations (device_id, latitude, longitude, timestamp) VALUES 
+**sau đó nhập:**
+  
+INSERT INTO device_locations (device_id, latitude, longitude, timestamp) VALUES 
 ('car_01', 16.04500, 108.20500, NOW() - INTERVAL '90 minutes'),
 ('car_01', 16.04700, 108.20600, NOW() - INTERVAL '60 minutes'),
 ('car_01', 16.04900, 108.20800, NOW() - INTERVAL '30 minutes'),
 ('car_01', 16.05200, 108.21100, NOW() - INTERVAL '5 minutes');
-* **chú ý chọn thiết bị và thời gian để xem lịch sử**
+
+**chú ý chọn thiết bị và thời gian để xem lịch sử**
