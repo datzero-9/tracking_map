@@ -183,6 +183,7 @@ function App() {
       />
 
       <MapContainer center={currentPos} zoom={15} style={{ height: "100%", width: "100%", cursor: "crosshair" }}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
         {/* xử lý các sự trên bản đồ */}
         <MapUpdater center={currentPos} />
         <HoverTracker />
