@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"tracking-map-backend/models" // Chú ý: Thay "tracking_map" bằng tên module trong file go.mod của bạn
+	"tracking-map-backend/models" 
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -28,22 +28,22 @@ func (r *LocationRepo) SaveLocation(ctx context.Context, loc models.Location) er
 	return err
 }
 
-// Lấy vị trí mới nhất (Ưu tiên đọc từ Redis trước, nếu không có mới chọc xuống DB)
+// Lấy vị trí mới nhất, đọc từ redis trước
 func (r *LocationRepo) GetLatestLocation(ctx context.Context, deviceID string) (models.Location, error) {
 	var loc models.Location
 
-	// 1. Tìm trong Redis trước (Cực nhanh O(1))
+	//Tìm trong Redis trước 
 	val, err := r.Redis.Get(ctx, "latest_loc:"+deviceID).Result()
 	if err == nil {
 		json.Unmarshal([]byte(val), &loc)
 		return loc, nil
 	}
 
-	// 2. Cache miss -> Lấy từ PostgreSQL
+	//miss thf Lấy từ PostgreSQL
 	query := `SELECT device_id, latitude, longitude, timestamp FROM device_locations WHERE device_id = $1 ORDER BY timestamp DESC LIMIT 1`
 	err = r.DB.QueryRow(ctx, query, deviceID).Scan(&loc.DeviceID, &loc.Latitude, &loc.Longitude, &loc.Timestamp)
 	
-	// Cập nhật lại Cache để lần sau lấy cho nhanh
+	// Cập nhật lại để lần sau lấy cho nhanh
 	if err == nil {
 		locJSON, _ := json.Marshal(loc)
 		r.Redis.Set(ctx, "latest_loc:"+deviceID, locJSON, 24*time.Hour)

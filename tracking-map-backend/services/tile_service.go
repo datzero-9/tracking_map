@@ -9,35 +9,31 @@ import (
 	"math"
 )
 
-// DownloadTile tải 1 mảnh ảnh từ Google và lưu vào thư mục local
+// tải mảnh ảnh từ Google và lưu vào thư mục
 func DownloadTile(z, x, y int) error {
-	// 1. Tạo URL dựa trên tọa độ
+	
 	url := fmt.Sprintf("http://mt1.google.com/vt/lyrs=m&x=%d&y=%d&z=%d", x, y, z)
-
-	// 2. Tạo đường dẫn lưu file (Ví dụ: tiles/13/x/y.png)
 	dir := fmt.Sprintf("tiles/%d/%d", z, x)
-	os.MkdirAll(dir, os.ModePerm) // Tạo thư mục nếu chưa có
+	os.MkdirAll(dir, os.ModePerm)
 	filePath := filepath.Join(dir, fmt.Sprintf("%d.png", y))
 
-	// 3. Kiểm tra nếu file đã tồn tại thì không tải lại (Caching đơn giản)
+	//Kiểm tra nếu file đã tồn tại thì không
 	if _, err := os.Stat(filePath); err == nil {
 		return nil 
 	}
 
-	// 4. Tiến hành tải ảnh
+	//tải ảnh
 	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("Lỗi khi tải tile: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// 5. Ghi dữ liệu vào file
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
-
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
@@ -50,11 +46,10 @@ func LonLatToTile(lon, lat float64, zoom int) (int, int) {
 	return x, y
 }
 
-// 2. Hàm gom cụm: Tải toàn bộ khu vực xung quanh 1 điểm
+// 2. Tải toàn bộ khu vực xung quanh 1 điểm
 func DownloadMapArea(centerLon, centerLat float64) {
-	zooms := []int{13, 14, 15} // Đạt chuẩn yêu cầu: Load ở 3 mức zoom
-	radius := 2 // Tải rộng ra xung quanh 2 mảnh (để khi người dùng kéo chuột không bị màn hình xám)
-
+	zooms := []int{13, 14, 15} //3 mức zoom
+	radius := 10 
 	fmt.Println("⏳ Đang tải bản đồ Google Offline...")
 	for _, z := range zooms {
 		centerX, centerY := LonLatToTile(centerLon, centerLat, z)
@@ -63,10 +58,10 @@ func DownloadMapArea(centerLon, centerLat float64) {
 			for y := centerY - radius; y <= centerY + radius; y++ {
 				err := DownloadTile(z, x, y)
 				if err != nil {
-					fmt.Printf("❌ Lỗi tải tile z:%d x:%d y:%d\n", z, x, y)
+					fmt.Printf("Lỗi tải tile z:%d x:%d y:%d\n", z, x, y)
 				}
 			}
 		}
 	}
-	fmt.Println("✅ Hoàn tất tải bản đồ Offline (Lưu tại thư mục /tiles)!")
+	fmt.Println("Hoàn tất tải bản đồ Offline (Lưu tại thư mục /tiles)!")
 }
