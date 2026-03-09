@@ -45,9 +45,11 @@ Mở Terminal / PowerShell tại thư mục gốc của project (nơi chứa fil
 
 
 **Lần đầu tiên khởi chạy (sẽ build image và tải thư viện):**
+
 docker-compose up --build -d
 
 **Các lần chạy sau (khởi động nhanh):**
+
 docker-compose up -d
 
 ### Bước 2: Truy cập ứng dụng
@@ -67,6 +69,8 @@ INSERT INTO device_locations (device_id, latitude, longitude, timestamp) VALUES
 ('car_01', 16.04900, 108.20800, NOW() - INTERVAL '30 minutes'),
 ('car_01', 16.05200, 108.21100, NOW() - INTERVAL '5 minutes');
 ```bash
+
+
 ### Bước 4: Tắt hệ thống an toàn
 **Khi không sử dụng, hãy tắt hệ thống để giải phóng tài nguyên máy bằng lệnh:**
 
