@@ -43,7 +43,7 @@ Hệ thống đã được tự động hóa hoàn toàn.
 ### Bước 1: Khởi động toàn bộ hệ thống
 Mở Terminal / PowerShell tại thư mục gốc của project (nơi chứa file `docker-compose.yml`) và chạy lệnh:
 
-```bash
+
 # Lần đầu tiên khởi chạy (sẽ build image và tải thư viện):
 docker-compose up --build -d
 
@@ -57,13 +57,13 @@ Sau khi hệ thống khởi động thành công (các container báo `Started`)
 * **Backend API / Tile Server:** `http://localhost:8080`
 
 ### Bước 3: Thêm dữ liệu mẫu (Fake Data) để test Lịch sử
-Để xem được lịch sử di chuyển, bạn cần có dữ liệu trong Database. Mở một Terminal mới và chạy lệnh sau để truy cập thẳng vào Database bên trong Docker:
+*Để xem được lịch sử di chuyển, bạn cần có dữ liệu trong Database. Mở một Terminal mới và chạy lệnh sau để truy cập thẳng vào Database bên trong Docker:
 
+*docker exec -it tracking_map-postgres_db-1 psql -U user_tracking -d tracking_map
 ```bash
-docker exec -it tracking_map-postgres_db-1 psql -U user_tracking -d tracking_map
-
 INSERT INTO device_locations (device_id, latitude, longitude, timestamp) VALUES 
 ('car_01', 16.04500, 108.20500, NOW() - INTERVAL '90 minutes'),
 ('car_01', 16.04700, 108.20600, NOW() - INTERVAL '60 minutes'),
 ('car_01', 16.04900, 108.20800, NOW() - INTERVAL '30 minutes'),
 ('car_01', 16.05200, 108.21100, NOW() - INTERVAL '5 minutes');
+```bash
