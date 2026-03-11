@@ -46,7 +46,7 @@ Mở Terminal / PowerShell tại thư mục gốc của project (nơi chứa fil
 
 **Lần đầu tiên khởi chạy (sẽ build image và tải thư viện):**
 
-* docker-compose up --build -d
+* docker-compose up --build 
 
 **Các lần chạy sau (khởi động nhanh):**
 
