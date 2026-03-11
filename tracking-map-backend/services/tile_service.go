@@ -50,7 +50,7 @@ func LonLatToTile(lon, lat float64, zoom int) (int, int) {
 func DownloadMapArea(centerLon, centerLat float64) {
 	zooms := []int{13, 14, 15} //3 mức zoom
 	radius := 10 
-	fmt.Println("⏳ Đang tải bản đồ Google Offline...")
+	fmt.Println("Đang tải bản đồ Google Offline...")
 	for _, z := range zooms {
 		centerX, centerY := LonLatToTile(centerLon, centerLat, z)
 

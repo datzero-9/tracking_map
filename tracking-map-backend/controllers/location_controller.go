@@ -52,10 +52,10 @@ func (ctrl *LocationController) GetLatest(c *gin.Context) {
 	//Hỏi Redis TRƯỚC
 	cachedLoc, err := ctrl.Repo.Redis.Get(c.Request.Context(), redisKey).Result()
 	if err == nil {
-		// Có dữ liệu trong Redis -> Trả về ngay và luôn (0.001 giây)
+		// Có dữ liệu trong Redis Trả về ngay 
 		var loc models.Location
 		json.Unmarshal([]byte(cachedLoc), &loc)
-		fmt.Printf("Lấy vị trí %s siêu tốc từ Redis!\n", deviceID)
+		fmt.Printf("Lấy vị trí %s từ Redis!\n", deviceID)
 		c.JSON(http.StatusOK, loc)
 		return
 	}
