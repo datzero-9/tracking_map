@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, Popup, CircleMarker, Tooltip } from 'react-leaflet';
+// 👇 1. Thêm Polygon vào import
+import { MapContainer, TileLayer, Polyline, Marker, Popup, CircleMarker, Tooltip, Polygon } from 'react-leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -43,6 +44,34 @@ function App() {
 
   const markerRef = useRef(null);
 
+  // 👇 2. STATE VÀ USE-EFFECT ĐỂ KÉO FILE BIÊN GIỚI TỪ BACKEND
+  const [maskPositions, setMaskPositions] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/boundary')
+      .then(response => {
+        if (!response.ok) throw new Error("Không lấy được viền biên giới");
+        return response.json();
+      })
+      .then(data => {
+        const worldBounds = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
+        const geometry = data.features[0].geometry;
+        let holes = [];
+
+        if (geometry.type === "Polygon") {
+          holes.push(geometry.coordinates[0].map(c => [c[1], c[0]]));
+        } else if (geometry.type === "MultiPolygon") {
+          geometry.coordinates.forEach(poly => {
+            holes.push(poly[0].map(c => [c[1], c[0]]));
+          });
+        }
+        
+        setMaskPositions([worldBounds, ...holes]);
+      })
+      .catch(error => console.error("Lỗi kéo mặt nạ:", error));
+  }, []);
+  // 👆 ----------------------------------------------------- 👆
+
   useEffect(() => {
     const fetchDevices = async () => {
       try {
@@ -53,7 +82,6 @@ function App() {
     fetchDevices();
   }, []);
 
-// ĐỊnh vị xe
   const handleFindDevice = async (targetId) => {
     let idToFind = typeof targetId === 'string' ? targetId : deviceId;
     if (!idToFind) return alert("Vui lòng nhập ID xe!");
@@ -69,15 +97,12 @@ function App() {
     }
   };
 
-  //chọn xe
   const onDeviceChange = (e) => {
     const newValue = e.target.value;
     setDeviceId(newValue);
     if (deviceList.includes(newValue)) handleFindDevice(newValue);
   };
 
-
-  // lấy địng vị hiện tại
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) return alert("Trình duyệt không hỗ trợ GPS!");
 
@@ -106,8 +131,6 @@ function App() {
     );
   };
 
-
-  // vẽ lịch sử di chuyển
   const handleToggleHistory = async () => {
     if (history.length > 0) return setHistory([]);
 
@@ -126,7 +149,6 @@ function App() {
     } catch (e) { alert("Lỗi lấy lịch sử!"); }
   };
 
-  // vẽ đường đi + tính toán khoảng cách, thời gian
   const handleRouting = async () => {
     try {
       const startParts = startPoint.split(',');
@@ -155,8 +177,6 @@ function App() {
     }
   };
 
-
-  //chọn định vị điểm B
   const handleConfirmDestination = (pos) => {
     setEndPoint(`${pos[0].toFixed(5)}, ${pos[1].toFixed(5)}`);
     setRoute([]);
@@ -179,15 +199,31 @@ function App() {
 
       <InfoPanel lastUpdate={lastUpdate} deviceId={deviceId} currentPos={currentPos} distance={distance} duration={duration} />
 
+      {/* 👇 Đã thêm backgroundColor: "#f4f4f4" để đồng bộ màu viền */}
       <MapContainer
         center={currentPos}
-        zoom={14}
+        zoom={12}
         maxZoom={15}
-        minZoom={13}
-        style={{ height: "100vh", width: "100%" }}>
+        minZoom={6}
+        style={{ height: "100vh", width: "100%", backgroundColor: "#f4f4f4" }}>
+
         <TileLayer
           url="http://localhost:8080/tiles/{z}/{x}/{y}.png"
-          attribution='&copy; Bản đồ Offline (Google Tiles)' />
+          attribution='&copy; Bản đồ Offline (Google Tiles)'
+          minNativeZoom={10} 
+          maxNativeZoom={12} 
+        />
+
+        {/* {maskPositions.length > 0 && (
+          <Polygon 
+            positions={maskPositions} 
+            pathOptions={{ 
+              color: 'transparent', 
+              fillColor: '#f4f4f4', 
+              fillOpacity: 1 
+            }} 
+          />
+        )} */}
 
         <MapUpdater center={currentPos} />
         <HoverTracker />

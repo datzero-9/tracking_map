@@ -9,7 +9,8 @@ import (
 
 // khởi tạo kết nối và tạo bảng 
 func InitPostgres() *pgxpool.Pool {
-	dsn := "postgres://user_tracking:password123@postgres_db:5432/tracking_map"
+	dsn := "postgres://user_tracking:password123@localhost:5432/tracking_map"
+	// dsn := "postgres://user_tracking:password123@postgres_db:5432/tracking_map"
 	dbPool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		panic("Kết nối Database thất bại: " + err.Error())
