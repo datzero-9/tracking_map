@@ -10,8 +10,8 @@ import (
 // khởi tạo kết nối tới Redis Cache
 func InitRedis() *redis.Client {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		// Addr: "redis_cache:6379",
+		// Addr: "localhost:6379",
+		Addr: "redis_cache:6379",
 	})
 
 	if err := redisClient.Ping(context.Background()).Err(); err != nil {

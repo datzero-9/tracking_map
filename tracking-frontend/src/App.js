@@ -11,6 +11,7 @@ import { MapUpdater, RouteFitter, HoverTracker, MapClickHandler } from './compon
 import HistoryPath from './components/HistoryPath';
 import DestinationPopup from './components/DestinationPopup';
 
+import * as turf from '@turf/turf'; // THÊM DÒNG NÀY
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -54,10 +55,22 @@ function App() {
         return response.json();
       })
       .then(data => {
-        const worldBounds = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
-        const geometry = data.features[0].geometry;
+        const worldBounds = [[90, -180], [90, 180], [-90, 180], [-90, -180], [90, -180]];
+
+        // 👇 MA THUẬT TURF.JS Ở ĐÂY 👇
+        // Lấy dữ liệu Việt Nam gốc
+        const originalGeoJSON = data.features[0];
+
+        // "Bơm phồng" Việt Nam ra thêm 15 km (Bạn có thể đổi số 15 này tùy ý)
+        const bufferedGeoJSON = turf.buffer(originalGeoJSON,5, { units: 'kilometers' });
+
+        // Lấy hình học SAU KHI đã bơm phồng
+        const geometry = bufferedGeoJSON.geometry;
+        // 👆 ---------------------- 👆
+
         let holes = [];
 
+        // Logic đục lỗ giữ nguyên
         if (geometry.type === "Polygon") {
           holes.push(geometry.coordinates[0].map(c => [c[1], c[0]]));
         } else if (geometry.type === "MultiPolygon") {
@@ -65,7 +78,7 @@ function App() {
             holes.push(poly[0].map(c => [c[1], c[0]]));
           });
         }
-        
+
         setMaskPositions([worldBounds, ...holes]);
       })
       .catch(error => console.error("Lỗi kéo mặt nạ:", error));
@@ -199,31 +212,40 @@ function App() {
 
       <InfoPanel lastUpdate={lastUpdate} deviceId={deviceId} currentPos={currentPos} distance={distance} duration={duration} />
 
-      {/* 👇 Đã thêm backgroundColor: "#f4f4f4" để đồng bộ màu viền */}
       <MapContainer
         center={currentPos}
         zoom={12}
-        maxZoom={15}
         minZoom={6}
+        maxZoom={14}
         style={{ height: "100vh", width: "100%", backgroundColor: "#f4f4f4" }}>
 
         <TileLayer
           url="http://localhost:8080/tiles/{z}/{x}/{y}.png"
           attribution='&copy; Bản đồ Offline (Google Tiles)'
-          minNativeZoom={10} 
-          maxNativeZoom={12} 
+
+          minNativeZoom={5}
+          maxNativeZoom={14}
+
+          // 3 DÒNG MA THUẬT CHỐNG ĐƠ TRÌNH DUYỆT (Giảm Spam Request) 
+          updateWhenIdle={true}       // Chỉ load ảnh khi ngừng kéo/zoom bản đồ
+          updateWhenZooming={false}   // Không load ảnh lắt nhắt trong lúc đang cuộn chuột
+          keepBuffer={4}              // Giữ lại 4 lớp gạch xung quanh trong RAM của trình duyệt
         />
 
-        {/* {maskPositions.length > 0 && (
-          <Polygon 
-            positions={maskPositions} 
-            pathOptions={{ 
-              color: 'transparent', 
-              fillColor: '#f4f4f4', 
-              fillOpacity: 1 
-            }} 
+        {/* MẶT NẠ CHE BIỂN ĐÔNG VÀ NƯỚC NGOÀI (Đã mở comment) */}
+        {/* MẶT NẠ ĐÃ ĐƯỢC BƠM PHỒNG VÀ TRANG TRÍ */}
+        {maskPositions.length > 0 && (
+          <Polygon
+            positions={maskPositions}
+            pathOptions={{
+              color: 'red',          // Đổi viền thành màu Đỏ
+              weight: 2,             // Độ dày của viền (2 pixel)
+              dashArray: '10, 10',   // TẠO NÉT ĐỨT (10px gạch, 10px khoảng trống)
+              fillColor: '#f4f4f4',  // Màu xám che bên ngoài
+              fillOpacity: 1
+            }}
           />
-        )} */}
+        )}
 
         <MapUpdater center={currentPos} />
         <HoverTracker />

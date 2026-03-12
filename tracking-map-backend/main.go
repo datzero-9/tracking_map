@@ -22,9 +22,13 @@ func main() {
 	defer redisClient.Close()
 	fmt.Println("Hệ thống tracking map sẵn sàng!")
 
+	// Khởi tạo các lớp Repository & Service
 	repo := &repositories.LocationRepo{DB: dbPool, Redis: redisClient}
 	service := &services.LocationService{Repo: repo}
-	controller := &controllers.LocationController{Repo: repo, Service: service}
+	
+	locController := &controllers.LocationController{Repo: repo, Service: service}
+	
+	tileController := &controllers.TileController{Redis: redisClient} 
 
 	r := gin.Default()
 	r.Use(cors.Default())
@@ -36,25 +40,22 @@ func main() {
 	}
 	
 	// 2. Chạy ngầm con Robot cào bản đồ
-	go services.DownloadVietnamBBox()
+	go services.StartVietnamCrawler()
 
-	// 3. CÁC ĐƯỜNG DẪN TĨNH (Để ngoài API Group để không bị Rate Limit chặn)
-	r.Static("/tiles", "./tiles")
+	r.GET("/tiles/:z/:x/:y", tileController.GetTile)
 	
-	// 👉 MỞ CỔNG CHO FRONTEND LẤY FILE BIÊN GIỚI (Ý tưởng tuyệt vời của bạn)
+	
 	r.StaticFile("/api/boundary", "./vn.json") 
 
 	// 4. CÁC API CỐT LÕI (Bảo vệ bằng Rate Limiter Redis)
 	api := r.Group("/api/v1")
 	api.Use(middlewares.RateLimiter(redisClient))
 	{
-		api.GET("/devices", controller.GetDeviceList)
-		
-		// 🚨 Tôi đã sửa lỗi đánh máy chữ "laocations" thành "locations" cho bạn nhé!
-		api.POST("/locations", controller.PostLocation) 
-		api.GET("/devices/:device_id/latest", controller.GetLatest)
-		api.GET("/devices/:device_id/history", controller.GetHistory)
-		api.GET("/route", controller.GetRoute)
+		api.GET("/devices", locController.GetDeviceList)       
+		api.POST("/locations", locController.PostLocation) 
+		api.GET("/devices/:device_id/latest", locController.GetLatest)
+		api.GET("/devices/:device_id/history", locController.GetHistory)
+		api.GET("/route", locController.GetRoute)
 	}
 
 	// Khởi động server

@@ -23,6 +23,7 @@ services:
     restart: on-failure
     volumes:            
       - ./tracking-map-backend/tiles:/app/tiles
+      - ./tracking-map-backend/vn.json:/app/vn.json
     depends_on:
       - postgres_db
       - redis_cache
