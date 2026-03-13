@@ -94,9 +94,9 @@ func DownloadAreaSmart(geometry orb.Geometry, zooms []int, areaName string) {
 func StartVietnamCrawler() {
 	// Danh sách các mức zoom bạn muốn tải cho TOÀN BỘ Việt Nam.
 	// Bao gồm zoom nhỏ (5-10) để nhìn toàn cảnh, và zoom lớn (11-14) để nhìn rõ đường.
-	zooms := []int{5, 6, 7, 8, 9, 10, 11, 12, 13,14}
-
-	go DownloadAreaSmart(vnBoundary, zooms, "Toàn Quốc (Full 5-13)")
+	zooms := []int{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	// đến zoom 14 hơn 80k img
+	go DownloadAreaSmart(vnBoundary, zooms, "Toàn Quốc (Full 5-15)")
 }
 
 // Dành cho Controller gọi để lấy ảnh ra khỏi ổ cứng

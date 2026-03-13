@@ -1,0 +1,3 @@
+tracking-map-backend/tiles/
+**/node_modules/
+.git/

@@ -45,9 +45,11 @@ function App() {
 
   const markerRef = useRef(null);
 
-  // 👇 2. STATE VÀ USE-EFFECT ĐỂ KÉO FILE BIÊN GIỚI TỪ BACKEND
-  const [maskPositions, setMaskPositions] = useState([]);
 
+  const [maskPositions, setMaskPositions] = useState([]);
+  const [forbiddenZones, setForbiddenZones] = useState([]);
+
+  // 👇 2. STATE VÀ USE-EFFECT ĐỂ KÉO FILE BIÊN GIỚI TỪ BACKEND
   useEffect(() => {
     fetch('http://localhost:8080/api/boundary')
       .then(response => {
@@ -62,7 +64,7 @@ function App() {
         const originalGeoJSON = data.features[0];
 
         // "Bơm phồng" Việt Nam ra thêm 15 km (Bạn có thể đổi số 15 này tùy ý)
-        const bufferedGeoJSON = turf.buffer(originalGeoJSON,5, { units: 'kilometers' });
+        const bufferedGeoJSON = turf.buffer(originalGeoJSON, 5, { units: 'kilometers' });
 
         // Lấy hình học SAU KHI đã bơm phồng
         const geometry = bufferedGeoJSON.geometry;
@@ -83,8 +85,8 @@ function App() {
       })
       .catch(error => console.error("Lỗi kéo mặt nạ:", error));
   }, []);
-  // 👆 ----------------------------------------------------- 👆
 
+  // lấy ra thiết bị
   useEffect(() => {
     const fetchDevices = async () => {
       try {
@@ -94,6 +96,49 @@ function App() {
     };
     fetchDevices();
   }, []);
+
+
+  // 👇 2. HÀM LẤY VÙNG CẤM QUÂN SỰ (map.geojson) 👇
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/forbidden-zones')
+      .then(res => res.json())
+      .then(data => {
+        // Cắt dữ liệu GeoJSON thành mảng tọa độ [Lat, Lon] cho Leaflet vẽ
+        const zones = data.features.map(f =>
+          f.geometry.coordinates[0].map(c => [c[1], c[0]])
+        );
+        setForbiddenZones(zones);
+      })
+      .catch(err => console.error("Lỗi kéo vùng cấm:", err));
+  }, []);
+
+  // 👇 HÀM "RADAR" KIỂM TRA VI PHẠM 👇
+  useEffect(() => {
+    // Chỉ chạy khi đã có vùng cấm và xe đã có tọa độ
+    if (forbiddenZones.length > 0 && currentPos) {
+      // Turf.js bắt buộc tọa độ phải là [Kinh độ, Vĩ độ]
+      const carPoint = turf.point([currentPos[1], currentPos[0]]);
+
+      let isViolating = false;
+
+      // Quét qua toàn bộ các vùng cấm
+      forbiddenZones.forEach(zoneCoords => {
+        const polyCoords = zoneCoords.map(c => [c[1], c[0]]); // Đổi ngược lại cho Turf tính toán
+        const polygon = turf.polygon([[...polyCoords, polyCoords[0]]]); // Khép kín đa giác
+
+        // Phát hiện giẫm vạch!
+        if (turf.booleanPointInPolygon(carPoint, polygon)) {
+          isViolating = true;
+        }
+      });
+
+      if (isViolating) {
+        console.warn("🚨 XE ĐANG TRONG VÙNG CẤM!");
+        alert(`⚠️ BÁO ĐỘNG:\nThiết bị ${deviceId} đang xâm nhập khu vực quân sự!`);
+      }
+    }
+  }, [currentPos, forbiddenZones, deviceId]);
+
 
   const handleFindDevice = async (targetId) => {
     let idToFind = typeof targetId === 'string' ? targetId : deviceId;
@@ -216,7 +261,7 @@ function App() {
         center={currentPos}
         zoom={12}
         minZoom={6}
-        maxZoom={14}
+        maxZoom={15}
         style={{ height: "100vh", width: "100%", backgroundColor: "#f4f4f4" }}>
 
         <TileLayer
@@ -224,7 +269,7 @@ function App() {
           attribution='&copy; Bản đồ Offline (Google Tiles)'
 
           minNativeZoom={5}
-          maxNativeZoom={14}
+          maxNativeZoom={15}
 
           // 3 DÒNG MA THUẬT CHỐNG ĐƠ TRÌNH DUYỆT (Giảm Spam Request) 
           updateWhenIdle={true}       // Chỉ load ảnh khi ngừng kéo/zoom bản đồ
@@ -234,19 +279,37 @@ function App() {
 
         {/* MẶT NẠ CHE BIỂN ĐÔNG VÀ NƯỚC NGOÀI (Đã mở comment) */}
         {/* MẶT NẠ ĐÃ ĐƯỢC BƠM PHỒNG VÀ TRANG TRÍ */}
+
         {maskPositions.length > 0 && (
           <Polygon
             positions={maskPositions}
             pathOptions={{
-              color: 'red',          // Đổi viền thành màu Đỏ
-              weight: 2,             // Độ dày của viền (2 pixel)
-              dashArray: '10, 10',   // TẠO NÉT ĐỨT (10px gạch, 10px khoảng trống)
-              fillColor: '#f4f4f4',  // Màu xám che bên ngoài
+              color: 'red',
+              weight: 2,
+              dashArray: '10, 10',
+              fillColor: '#f4f4f4',
               fillOpacity: 1
             }}
           />
         )}
 
+
+        {/* 👇 VẼ CÁC VÙNG CẤM QUÂN SỰ BÊN TRONG BẢN ĐỒ 👇 */}
+        {forbiddenZones.map((zone, index) => (
+          <Polygon
+            key={index}
+            positions={zone}
+            pathOptions={{
+              color: 'red',
+              weight: 2,
+              dashArray: '5, 5',
+              fillColor: 'red',
+              fillOpacity: 0.3
+            }}
+          >
+            <Tooltip sticky>☢️ Khu Vực Quân Sự (Cấm Vào)</Tooltip>
+          </Polygon>
+        ))}
         <MapUpdater center={currentPos} />
         <HoverTracker />
         <MapClickHandler setClickedPos={setClickedPos} />

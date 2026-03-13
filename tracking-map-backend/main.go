@@ -25,10 +25,10 @@ func main() {
 	// Khởi tạo các lớp Repository & Service
 	repo := &repositories.LocationRepo{DB: dbPool, Redis: redisClient}
 	service := &services.LocationService{Repo: repo}
-	
+
 	locController := &controllers.LocationController{Repo: repo, Service: service}
-	
-	tileController := &controllers.TileController{Redis: redisClient} 
+
+	tileController := &controllers.TileController{Redis: redisClient}
 
 	r := gin.Default()
 	r.Use(cors.Default())
@@ -38,21 +38,22 @@ func main() {
 	if err != nil {
 		panic("Không thể khởi động vì thiếu vn.json: " + err.Error())
 	}
-	
+
 	// 2. Chạy ngầm con Robot cào bản đồ
 	go services.StartVietnamCrawler()
 
 	r.GET("/tiles/:z/:x/:y", tileController.GetTile)
-	
-	
-	r.StaticFile("/api/boundary", "./vn.json") 
 
+	r.StaticFile("/api/boundary", "./vn.json")
+
+	// 👇 CHÍNH LÀ DÒNG NÀY: MỞ API PHỤC VỤ FILE VÙNG CẤM QUÂN SỰ 👇
+	r.StaticFile("/api/v1/forbidden-zones", "./map.geojson")
 	// 4. CÁC API CỐT LÕI (Bảo vệ bằng Rate Limiter Redis)
 	api := r.Group("/api/v1")
 	api.Use(middlewares.RateLimiter(redisClient))
 	{
-		api.GET("/devices", locController.GetDeviceList)       
-		api.POST("/locations", locController.PostLocation) 
+		api.GET("/devices", locController.GetDeviceList)
+		api.POST("/locations", locController.PostLocation)
 		api.GET("/devices/:device_id/latest", locController.GetLatest)
 		api.GET("/devices/:device_id/history", locController.GetHistory)
 		api.GET("/route", locController.GetRoute)

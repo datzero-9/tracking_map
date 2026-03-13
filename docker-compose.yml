@@ -24,6 +24,7 @@ services:
     volumes:            
       - ./tracking-map-backend/tiles:/app/tiles
       - ./tracking-map-backend/vn.json:/app/vn.json
+      - ./tracking-map-backend/map.geojson:/app/map.geojson
     depends_on:
       - postgres_db
       - redis_cache
